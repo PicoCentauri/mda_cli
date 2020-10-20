@@ -9,10 +9,13 @@
 import pytest
 import sys
 
+from MDAnalysis.analysis.rdf import InterRDF
+from MDAnalysis.tests.datafiles import PSF, DCD
+
 # Workaround since we have no real module
 sys.path.append("..")
 
-from cli_main import convert_str_time
+from cli_main import convert_str_time, main
 
 
 @pytest.mark.parametrize('x, frame',
@@ -32,3 +35,24 @@ def test_convert_str_time_dt():
 def test_convert_str_time_raise():
     with pytest.raises(ValueError):
         convert_str_time('0.1', dt=1)
+
+
+class TestMain(object):
+
+    @pytest.fixture()
+    def kwargs(self):
+        kwargs = {}
+        kwargs["begin"] = "0"
+        kwargs["end"] = "1"
+        kwargs["dt"] = "1"
+        kwargs["verbose"] = False
+        kwargs["g1"] = "all"
+        kwargs["g2"] = "all"
+        kwargs["func"] = None
+        return kwargs
+
+    def test_pickling(self, kwargs, tmpdir):
+        with tmpdir.as_cwd():
+            with pytest.warns(UserWarning):
+                main(PSF, DCD, analysis_callable=InterRDF, **kwargs)
+                open("{}.pickle".format(InterRDF.__name__))
